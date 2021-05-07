@@ -34,13 +34,14 @@ namespace KantorLr7.ViewModels
 			GeneratePointsTableCommand = new LambdaCommand(OnGeneratePointsTableCommandExecuted, CanGeneratePointsTableCommandExecute);
 			SavePointsTableCommand = new LambdaCommand(OnSavePointsTableCommandExecuted, CanSavePointsTableCommandExecute);
 			RestorePointsTableCommand = new LambdaCommand(OnRestorePointsTableCommandExecuted, CanRestorePointsTableCommandExecute);
+			SelectParameterizationMethodCommand = new LambdaCommand(OnSelectParameterizationMethodCommandExecuted, CanSelectParameterizationMethodCommandExecute);
 		}
 
 		#region Properties
 		private string _title = "Title";
 		public string Title { get => _title; set => Set(ref _title, value); }
 
-		private string _status = "Интерполирование многочленами";
+		private string _status = "Интерполирование сплайнами";
 		public string Status { get => _status; set => Set(ref _status, value); }
 
 		public ObservableCollection<Point> PointsFunction { get; set; } = new ObservableCollection<Point>();
@@ -120,6 +121,8 @@ namespace KantorLr7.ViewModels
 
 		private string _pointsCount;
 		public string PointsCount { get => _pointsCount; set => Set(ref _pointsCount, value); }
+
+		private string _parameterizationMethod = "1";
 		#endregion
 
 		#region Commands
@@ -441,7 +444,7 @@ namespace KantorLr7.ViewModels
 				Random random = new Random();
 				for (int i = 0; i < count; i++)
 				{
-					PointsTable.Add(new Point(random.Next(left), random.Next(right)));
+					PointsTable.Add(new Point(random.Next(left, right), random.Next(left, right)));
 				}
 				Status = $"Таблица сгенерирована";
 			}
@@ -454,6 +457,13 @@ namespace KantorLr7.ViewModels
 		{
 			return !(string.IsNullOrWhiteSpace(GeneratePointsTableLeftBoard) || string.IsNullOrWhiteSpace(GeneratePointsTableRightBoard) || string.IsNullOrWhiteSpace(PointsCount));
 		}
+
+		public ICommand SelectParameterizationMethodCommand { get; }
+		private void OnSelectParameterizationMethodCommandExecuted(object p)
+		{
+			_parameterizationMethod = p.ToString();
+		}
+		private bool CanSelectParameterizationMethodCommandExecute(object p) => true;
 		#endregion
 
 		private void FindMaxDeviation()

@@ -17,20 +17,23 @@ namespace KantorLr7.ViewModels
 	public class MainWindowViewModel : ViewModel
 	{
 		private const string SPLINE_FILE = "spline.dat";
+		private const string POINTS_FILE = "points.dat";
 		private InterpolatingCubicSpline _spline;
 		public MainWindowViewModel()
 		{
 			CalculateFunctionValueInPointCommand = new LambdaCommand(OnCalculateFunctionValueInPointCommandExecuted, CanCalculateFunctionValueInPointCommandExecute);
 			RestoreSplineTableCommand = new LambdaCommand(OnRestoreSplineTableCommandExecuted, CanRestoreLagrangeTableCommandExecute);
 			SaveSplineTableCommand = new LambdaCommand(OnSaveSplineTableCommandExecuted, CanSaveSplineTableCommandCommandExecute);
-			
-			
-			
+			AddNewPointInPointsTableCommand = new LambdaCommand(OnAddNewPointInPointsTableCommandExecuted, CanAddNewPointInPointsTableCommandExecute);
+			RemoveSelectedPointInPointsTableCommand = new LambdaCommand(OnRemoveSelectedPointInPointsTableCommandExecuted, CanRemoveSelectedPointInPointsTableCommandExecute);
 			AddNewPointCommand = new LambdaCommand(OnAddNewPointCommandExecuted, CanAddNewPointCommandExecute);
 			RemoveSelectedPointCommand = new LambdaCommand(OnRemoveSelectedPointCommandExecuted, CanRemoveSelectedPointCommandExecute);
 			BuildFunctionGraphicCommand = new LambdaCommand(OnBuildFunctionGraphicCommandExecuted, CanBuildFunctionGraphicCommandExecute);
 			BuildSplineGraphicCommand = new LambdaCommand(OnBuildSplineGraphicCommandExecuted, CanBuildSplineGraphicCommandExecute);
 			GenerateTableCommand = new LambdaCommand(OnGenerateTableCommandExecuted, CanGenerateTableCommandExecute);
+			GeneratePointsTableCommand = new LambdaCommand(OnGeneratePointsTableCommandExecuted, CanGeneratePointsTableCommandExecute);
+			SavePointsTableCommand = new LambdaCommand(OnSavePointsTableCommandExecuted, CanSavePointsTableCommandExecute);
+			RestorePointsTableCommand = new LambdaCommand(OnRestorePointsTableCommandExecuted, CanRestorePointsTableCommandExecute);
 		}
 
 		#region Properties
@@ -77,10 +80,13 @@ namespace KantorLr7.ViewModels
 		public string ArgumentsArray { get => _argumentsArray; set => Set(ref _argumentsArray, value); }
 
 		public ObservableCollection<Point> SplineTable { get; set; } = new ObservableCollection<Point>();
-		
+		public ObservableCollection<Point> PointsTable { get; set; } = new ObservableCollection<Point>();
 
 		private Point _selectedPoint;
 		public Point SelectedPoint { get => _selectedPoint; set => Set(ref _selectedPoint, value); }
+
+		private Point _selectedPointInPointsTable;
+		public Point SelectedPointInPointsTable { get => _selectedPointInPointsTable; set => Set(ref _selectedPointInPointsTable, value); }
 
 		private string _argumentLeftBoard;
 		public string ArgumentLeftBoard { get => _argumentLeftBoard; set => Set(ref _argumentLeftBoard, value); }
@@ -105,6 +111,15 @@ namespace KantorLr7.ViewModels
 
 		private string _maxDeviationPoint;
 		public string MaxDeviationPoint { get => _maxDeviationPoint; set => Set(ref _maxDeviationPoint, value); }
+
+		private string _generatePointsTableLeftBoard;
+		public string GeneratePointsTableLeftBoard { get => _generatePointsTableLeftBoard; set => Set(ref _generatePointsTableLeftBoard, value); }
+
+		private string _generatePointsTableRightBoard;
+		public string GeneratePointsTableRightBoard { get => _generatePointsTableRightBoard; set => Set(ref _generatePointsTableRightBoard, value); }
+
+		private string _pointsCount;
+		public string PointsCount { get => _pointsCount; set => Set(ref _pointsCount, value); }
 		#endregion
 
 		#region Commands
@@ -164,6 +179,33 @@ namespace KantorLr7.ViewModels
 			return File.Exists(SPLINE_FILE);
 		}
 
+		public ICommand RestorePointsTableCommand { get; }
+		private void OnRestorePointsTableCommandExecuted(object p)
+		{
+			try
+			{
+				PointsTable.Clear();
+				StreamReader reader = new StreamReader(POINTS_FILE);
+				string[] points = reader.ReadToEnd().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+				string[] coords;
+				for (int i = 0; i < points.Length; i++)
+				{
+					coords = points[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
+					PointsTable.Add(new Point(Convert.ToDouble(coords[0]), Convert.ToDouble(coords[1])));
+				}
+				reader.Close();
+				Status = "Данные восстановлены";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanRestorePointsTableCommandExecute(object p)
+		{
+			return File.Exists(POINTS_FILE);
+		}
+
 		public ICommand SaveSplineTableCommand { get; }
 		private void OnSaveSplineTableCommandExecuted(object p)
 		{
@@ -187,12 +229,34 @@ namespace KantorLr7.ViewModels
 			return SplineTable.Count > 0;
 		}
 
+		public ICommand SavePointsTableCommand { get; }
+		private void OnSavePointsTableCommandExecuted(object p)
+		{
+			try
+			{
+				StreamWriter writer = new StreamWriter(POINTS_FILE);
+				for (int i = 0; i < PointsTable.Count; i++)
+				{
+					writer.WriteLine($"{PointsTable[i].X} {PointsTable[i].Y}");
+				}
+				writer.Close();
+				Status = $"Данные записаны в файл {POINTS_FILE}";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanSavePointsTableCommandExecute(object p)
+		{
+			return PointsTable.Count > 0;
+		}
+
 		public ICommand AddNewPointCommand { get; }
 		private void OnAddNewPointCommandExecuted(object p)
 		{
 			try
 			{
-
 				SplineTable.Add(new Point(0, 0));
 				Status = $"Строка добавлена";
 			}
@@ -202,6 +266,24 @@ namespace KantorLr7.ViewModels
 			}
 		}
 		private bool CanAddNewPointCommandExecute(object p)
+		{
+			return true;
+		}
+
+		public ICommand AddNewPointInPointsTableCommand { get; }
+		private void OnAddNewPointInPointsTableCommandExecuted(object p)
+		{
+			try
+			{
+				PointsTable.Add(new Point(0, 0));
+				Status = $"Строка добавлена";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanAddNewPointInPointsTableCommandExecute(object p)
 		{
 			return true;
 		}
@@ -223,6 +305,25 @@ namespace KantorLr7.ViewModels
 		private bool CanRemoveSelectedPointCommandExecute(object p)
 		{
 			return SelectedPoint != null;
+		}
+
+		public ICommand RemoveSelectedPointInPointsTableCommand { get; }
+		private void OnRemoveSelectedPointInPointsTableCommandExecuted(object p)
+		{
+			try
+			{
+				PointsTable.Remove(SelectedPointInPointsTable);
+				SelectedPointInPointsTable = null;
+				Status = $"Точка удалена";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanRemoveSelectedPointInPointsTableCommandExecute(object p)
+		{
+			return SelectedPointInPointsTable != null;
 		}
 
 		public ICommand BuildFunctionGraphicCommand { get; }
@@ -324,7 +425,34 @@ namespace KantorLr7.ViewModels
 		}
 		private bool CanGenerateTableCommandExecute(object p)
 		{
-			return !(string.IsNullOrWhiteSpace(GenerateTableLeftBoard) || string.IsNullOrWhiteSpace(GenerateTableRightBoard) || string.IsNullOrWhiteSpace(GenerateTableStep) || string.IsNullOrWhiteSpace(FunctionText));
+			return !(string.IsNullOrWhiteSpace(GenerateTableLeftBoard) || string.IsNullOrWhiteSpace(GenerateTableRightBoard) || string.IsNullOrWhiteSpace(FunctionText) || string.IsNullOrWhiteSpace(GenerateTableStep));
+		}
+
+		public ICommand GeneratePointsTableCommand { get; }
+		private void OnGeneratePointsTableCommandExecuted(object p)
+		{
+			try
+			{
+				int left = Convert.ToInt32(GeneratePointsTableLeftBoard);
+				int right = Convert.ToInt32(GeneratePointsTableRightBoard);
+				int count = Convert.ToInt32(PointsCount);
+				PointsTable.Clear();
+				SelectedPointInPointsTable = null;
+				Random random = new Random();
+				for (int i = 0; i < count; i++)
+				{
+					PointsTable.Add(new Point(random.Next(left), random.Next(right)));
+				}
+				Status = $"Таблица сгенерирована";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanGeneratePointsTableCommandExecute(object p)
+		{
+			return !(string.IsNullOrWhiteSpace(GeneratePointsTableLeftBoard) || string.IsNullOrWhiteSpace(GeneratePointsTableRightBoard) || string.IsNullOrWhiteSpace(PointsCount));
 		}
 		#endregion
 

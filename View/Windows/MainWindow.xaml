@@ -92,7 +92,7 @@
                                         DataFieldX="X"
                                         DataFieldY="Y"
                                         Color="Red"/>
-                    <oxy:LineSeries Title="Многочлен" ItemsSource="{Binding PointsSpline}"
+                    <oxy:LineSeries Title="Сплайн" ItemsSource="{Binding PointsSpline}"
                                         DataFieldX="X"
                                         DataFieldY="Y"
                                         Color="BlueViolet"/>
@@ -110,7 +110,7 @@
                         <TextBox Width="75" Margin="5,0" Text="{Binding Step, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <Button Content="Построить график функции" HorizontalAlignment="Right" Command="{Binding BuildFunctionGraphicCommand}"/>
-                    <Button Margin="0,5" Content="Построить график многочлена" HorizontalAlignment="Right" Command="{Binding BuildPolynomGraphicCommand}"/>
+                    <Button Margin="0,5" Content="Построить график сплайна" HorizontalAlignment="Right" Command="{Binding BuildSplineGraphicCommand}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,10">
                         <TextBlock TextWrapping="Wrap" Text="Максимальное отклонение"/>
                         <TextBox Margin="5,0" Width="75" Text="{Binding MaxDeviationValue}"/>

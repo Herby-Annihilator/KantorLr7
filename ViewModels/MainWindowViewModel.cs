@@ -29,7 +29,7 @@ namespace KantorLr7.ViewModels
 			AddNewPointCommand = new LambdaCommand(OnAddNewPointCommandExecuted, CanAddNewPointCommandExecute);
 			RemoveSelectedPointCommand = new LambdaCommand(OnRemoveSelectedPointCommandExecuted, CanRemoveSelectedPointCommandExecute);
 			BuildFunctionGraphicCommand = new LambdaCommand(OnBuildFunctionGraphicCommandExecuted, CanBuildFunctionGraphicCommandExecute);
-			//BuildSplineGraphicCommand = new LambdaCommand(OnBuildSplineGraphicCommandExecuted, CanBuildSplineGraphicCommandExecute);
+			BuildSplineGraphicCommand = new LambdaCommand(OnBuildSplineGraphicCommandExecuted, CanBuildSplineGraphicCommandExecute);
 			GenerateTableCommand = new LambdaCommand(OnGenerateTableCommandExecuted, CanGenerateTableCommandExecute);
 		}
 
@@ -54,16 +54,16 @@ namespace KantorLr7.ViewModels
 			}
 		}
 
-		private string _graphTitle = "График функции -- и соответствующего многочлена";
+		private string _graphTitle = "График функции -- и соответствующего сплайна";
 		public string GraphTitle
 		{
 			get => _graphTitle;
 			set
 			{
 				if (value is null || string.IsNullOrWhiteSpace(value))
-					Set(ref _graphTitle, "График функции -- и соответствующего многочлена");
+					Set(ref _graphTitle, "График функции -- и соответствующего сплайна");
 				else
-					Set(ref _graphTitle, $"График функции {value} и соответствующего многочлена");
+					Set(ref _graphTitle, $"График функции {value} и соответствующего сплайна");
 			}
 		}
 
@@ -255,54 +255,48 @@ namespace KantorLr7.ViewModels
 			return !(string.IsNullOrWhiteSpace(ArgumentLeftBoard) || string.IsNullOrWhiteSpace(ArgumentRightBoard) || string.IsNullOrWhiteSpace(Step) || string.IsNullOrWhiteSpace(FunctionText));
 		}
 
-		//public ICommand BuildSplineGraphicCommand { get; }
-		//private void OnBuildSplineGraphicCommandExecuted(object p)
-		//{
-		//	try
-		//	{
-		//		PointsSpline.Clear();
-		//		Status = "Строю...";
-		//		double[] args;
-		//		double[] values;
-		//		double left = Convert.ToDouble(ArgumentLeftBoard);
-		//		double right = Convert.ToDouble(ArgumentRightBoard);
-		//		double step = Convert.ToDouble(Step);
-		//		if (NewtonTable.Count > 0)
-		//		{
-		//			args = new double[NewtonTable.Count];
-		//			values = new double[NewtonTable.Count];
-		//			for (int i = 0; i < args.Length; i++)
-		//			{
-		//				args[i] = NewtonTable[i].X;
-		//				values[i] = NewtonTable[i].Y;
-		//			}
-		//			_newton.Arguments = (double[])args.Clone();
-		//			_newton.Values = (double[])values.Clone();
-		//			List<double> otherArgs = new List<double>();
-		//			for (double i = left; i <= right; i += step)
-		//			{
-		//				otherArgs.Add(i);
-		//			}
-		//			double[] polynomValues = _newton.GetFunctionValuesInPoints(otherArgs.ToArray());
-		//			for (int i = 0; i < polynomValues.Length; i++)
-		//			{
-		//				PointsSpline.Add(new Point(otherArgs[i], polynomValues[i]));
-		//			}
-		//			FindMaxDeviation();
-		//			Status = "График многочлена построен";
-		//		}
-		//		else
-		//			Status = "График длжна быть построена таблица";
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		Status = $"Опреация провалена. Причина: {e.Message}";
-		//	}
-		//}
-		//private bool CanBuildSplineGraphicCommandExecute(object p)
-		//{
-		//	return NewtonTable.Count > 0 && CanBuildFunctionGraphicCommandExecute(p);
-		//}
+		public ICommand BuildSplineGraphicCommand { get; }
+		private void OnBuildSplineGraphicCommandExecuted(object p)
+		{
+			try
+			{
+				PointsSpline.Clear();
+				Status = "Строю...";
+				double[] args;
+				double[] values;
+				double left = Convert.ToDouble(ArgumentLeftBoard);
+				double right = Convert.ToDouble(ArgumentRightBoard);
+				double step = Convert.ToDouble(Step);
+				if (SplineTable.Count > 0)
+				{
+					args = new double[SplineTable.Count];
+					values = new double[SplineTable.Count];
+					for (int i = 0; i < args.Length; i++)
+					{
+						args[i] = SplineTable[i].X;
+						values[i] = SplineTable[i].Y;
+					}
+					_spline = new InterpolatingCubicSpline(args, values);
+					List<double> otherArgs = new List<double>();
+					for (double i = left; i <= right; i += step)
+					{
+						PointsSpline.Add(new Point(i, _spline.GetFunctionValueInPoint(i)));
+					}
+					FindMaxDeviation();
+					Status = "График многочлена построен";
+				}
+				else
+					Status = "График длжна быть построена таблица";
+			}
+			catch (Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanBuildSplineGraphicCommandExecute(object p)
+		{
+			return SplineTable.Count > 0 && CanBuildFunctionGraphicCommandExecute(p);
+		}
 
 		public ICommand GenerateTableCommand { get; }
 		private void OnGenerateTableCommandExecuted(object p)

@@ -10,6 +10,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Markup;
+using System.Linq;
 
 namespace KantorLr7.ViewModels
 {
@@ -35,6 +36,7 @@ namespace KantorLr7.ViewModels
 			SavePointsTableCommand = new LambdaCommand(OnSavePointsTableCommandExecuted, CanSavePointsTableCommandExecute);
 			RestorePointsTableCommand = new LambdaCommand(OnRestorePointsTableCommandExecuted, CanRestorePointsTableCommandExecute);
 			SelectParameterizationMethodCommand = new LambdaCommand(OnSelectParameterizationMethodCommandExecuted, CanSelectParameterizationMethodCommandExecute);
+			BuildFuckingGraphicCommand = new LambdaCommand(OnBuildFuckingGraphicCommandExecuted, CanBuildFuckingGraphicCommandExecute);
 		}
 
 		#region Properties
@@ -123,6 +125,9 @@ namespace KantorLr7.ViewModels
 		public string PointsCount { get => _pointsCount; set => Set(ref _pointsCount, value); }
 
 		private string _parameterizationMethod = "1";
+
+		private string _paramStep;
+		public string ParamStep { get => _paramStep; set => Set(ref _paramStep, value); }
 		#endregion
 
 		#region Commands
@@ -464,6 +469,71 @@ namespace KantorLr7.ViewModels
 			_parameterizationMethod = p.ToString();
 		}
 		private bool CanSelectParameterizationMethodCommandExecute(object p) => true;
+
+		public ICommand BuildFuckingGraphicCommand { get; }
+		private void OnBuildFuckingGraphicCommandExecuted(object p)
+		{
+			try
+			{
+				PointsSpline.Clear();
+				PointsFunction.Clear();
+				GraphTitle = "График интерполяционного сплайна";
+				double left = Convert.ToDouble(GeneratePointsTableLeftBoard);
+				double right = Convert.ToDouble(GeneratePointsTableRightBoard);
+				int size = PointsTable.Count;
+				double step = Convert.ToDouble(ParamStep);
+				double[] parameters = new double[size];
+				double sum = 0;
+				for (int i = 0; i < size; i++)
+				{
+					if (_parameterizationMethod == "1")
+						parameters[i] = i;
+					else if (_parameterizationMethod == "2")
+					{
+						parameters[i] = sum;
+						if (i < size - 1)
+							sum += Math.Sqrt((PointsTable[i + 1].X - PointsTable[i].X) * (PointsTable[i + 1].X - PointsTable[i].X) + (PointsTable[i + 1].Y - PointsTable[i].Y) * (PointsTable[i + 1].Y - PointsTable[i].Y));
+					}
+					else if (_parameterizationMethod == "3")
+					{
+						if (i > 1)
+							parameters[i] = Math.Max(PointsTable[i].X, PointsTable[i].Y) + parameters[i - 1];
+					}
+				}
+				double[] valuesX = new double[size];
+				double[] valuesY = new double[size];
+				for (int i = 0; i < size; i++)
+				{
+					valuesX[i] = PointsTable[i].X;
+					valuesY[i] = PointsTable[i].Y;
+				}
+				_spline = new InterpolatingCubicSpline(parameters,valuesX);
+				List<double> xCoords = new List<double>();
+				for (double i = left; i < right; i += step)
+				{
+					xCoords.Add(_spline.GetFunctionValueInPoint(i));
+				}
+				_spline = new InterpolatingCubicSpline(parameters, valuesY);
+				List<double> yCoords = new List<double>();
+				for (double i = left; i < right; i += step)
+				{
+					yCoords.Add(_spline.GetFunctionValueInPoint(i));
+				}
+				for (int i = 0; i < xCoords.Count; i++)
+				{
+					PointsSpline.Add(new Point(xCoords[i], yCoords[i]));
+				}
+				Status = "Выполнено";
+			}
+			catch(Exception e)
+			{
+				Status = $"Опреация провалена. Причина: {e.Message}";
+			}
+		}
+		private bool CanBuildFuckingGraphicCommandExecute(object p)
+		{
+			return PointsTable.Count > 0 && !(string.IsNullOrWhiteSpace(GeneratePointsTableLeftBoard) || string.IsNullOrWhiteSpace(GeneratePointsTableRightBoard) || string.IsNullOrWhiteSpace(ParamStep));
+		}
 		#endregion
 
 		private void FindMaxDeviation()

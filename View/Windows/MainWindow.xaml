@@ -124,7 +124,12 @@
                         <RadioButton Content="Способ 1" IsChecked="True" Command="{Binding SelectParameterizationMethodCommand}" CommandParameter="1"/>
                         <RadioButton Content="Способ 2" Command="{Binding SelectParameterizationMethodCommand}" CommandParameter="2"/>
                         <RadioButton Content="Способ 3" Command="{Binding SelectParameterizationMethodCommand}" CommandParameter="3"/>
-                        <Button Content="Построить графики" Margin="0,5" HorizontalAlignment="Right"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="Шаг графика"/>
+                            <TextBox Margin="5,0,15,0" Width="75" Text="{Binding ParamStep, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Content="Построить графики"  HorizontalAlignment="Right" Command="{Binding BuildFuckingGraphicCommand}"/>
+                        </StackPanel>
+                        
                         <StackPanel Grid.Row="1" Margin="5,5" MinHeight="80">
                             <TextBlock TextWrapping="Wrap" Text="Генерация таблицы точек" HorizontalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" Margin="0,10" HorizontalAlignment="Center">
